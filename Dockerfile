@@ -20,7 +20,7 @@ ARG GROUP_ID=1000
 RUN groupadd -g ${GROUP_ID} appgroup && \
     useradd -m -u ${USER_ID} -g appgroup appuser
 # These will be mapped by ID in the docker-compose file
-RUN groupadd -r -g 24 host_video || true && \
+RUN groupadd -r -g 13 host_video || true && \
     groupadd -r -g 100 host_render || true && \
     usermod -aG host_video,host_render appuser
 
