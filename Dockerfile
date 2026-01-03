@@ -1,46 +1,34 @@
-FROM debian:bookworm-slim
+# Use the Selkies GStreamer Debian base (high performance web GUI)
+FROM ghcr.io/selkies-project/selkies-gstreamer/debian-vnc:bookworm
 
-ENV DEBIAN_FRONTEND=noninteractive
+USER root
 
-# 1. Install Full Mesa Drivers + GPU dependencies
+# 1. Install Antigravity Dependencies + Python + FFmpeg + Firefox (for login)
 RUN apt-get update && apt-get install -y \
     python3 python3-pip python3-venv ffmpeg \
     libnss3 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 \
     libgtk-3-0 libgbm1 libasound2 libxcomposite1 libxdamage1 \
     libxrandr2 libxshmfence1 wget tar \
-    libxkbfile1 \
-    libgl1-mesa-dri libglx-mesa0 mesa-vulkan-drivers libgles2-mesa \
+    libxkbfile1 libx11-xcb1 \
+    firefox-esr \
     xdg-utils \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Setup User (Matching UID 1000)
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-RUN groupadd -g ${GROUP_ID} appgroup && \
-    useradd -m -u ${USER_ID} -g appgroup appuser
-# These will be mapped by ID in the docker-compose file
-RUN groupadd -r -g 13 host_video || true && \
-    groupadd -r -g 100 host_render || true && \
-    usermod -aG host_video,host_render appuser
-
-# 3. Create a URL Logger (So you can use your Laptop browser to log in)
-RUN echo '#!/bin/sh' > /usr/bin/xdg-open && \
-    echo 'echo "\n\n*** COPY THIS LINK TO YOUR LAPTOP BROWSER ***"' >> /usr/bin/xdg-open && \
-    echo 'echo "--------------------------------------------------"' >> /usr/bin/xdg-open && \
-    echo 'echo "$1"' >> /usr/bin/xdg-open && \
-    echo 'echo "--------------------------------------------------\n\n"' >> /usr/bin/xdg-open && \
-    chmod +x /usr/bin/xdg-open
-
-# 4. Install App
+# 2. Download and Install Antigravity
 WORKDIR /opt/antigravity
 RUN wget "https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.13.3-4533425205018624/linux-x64/Antigravity.tar.gz" -O app.tar.gz \
     && tar -xvf app.tar.gz --strip-components=1 \
     && rm app.tar.gz \
     && chmod +x antigravity
 
-RUN mkdir -p /home/appuser/data && chown -R appuser:appgroup /home/appuser
-USER appuser
-WORKDIR /home/appuser/data
+# 3. Setup Persistence & Permissions
+# Selkies base uses 'user' (UID 1000) as the default user
+RUN mkdir -p /home/user/data && chown -R user:user /home/user /opt/antigravity
 
-CMD ["/opt/antigravity/antigravity", "--no-sandbox"]
+# 4. Set the Autostart command
+# This tells Selkies to launch Antigravity when the desktop starts
+ENV START_COMMAND="/opt/antigravity/antigravity --no-sandbox"
+
+USER user
+WORKDIR /home/user/data
