@@ -2,23 +2,27 @@ services:
   antigravity:
     container_name: antigravity_gui
     build:
+      # If using the repo, ensure the repo has the updated Dockerfile above!
+      # If you edited the Dockerfile manually in Portainer, that works too.
       context: https://github.com/procrastinando/antigravity-sandboxed-docker.git
       dockerfile: Dockerfile
     
+    # NETWORK FIX: Allows the app to receive the Google Callback on localhost
+    network_mode: host
+
     volumes:
-      # Data Persistence: Change the path on the left to your preferred host location
       - /home/user/antigravity:/home/appuser/data
-      # Display Socket
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - /run/dbus:/run/dbus
     
     environment:
       - DISPLAY=${DISPLAY:-:0}
       - HOME=/home/appuser
+      - DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
     
     devices:
       - /dev/dri:/dev/dri
     
-    # Required for Electron sandboxing inside Docker
     security_opt:
       - seccomp:unconfined
     
