@@ -1,0 +1,27 @@
+services:
+  antigravity:
+    container_name: antigravity_gui
+    build:
+      context: https://github.com/procrastinando/antigravity-sandboxed-docker.git
+      dockerfile: Dockerfile
+    
+    volumes:
+      # Data Persistence: Change the path on the left to your preferred host location
+      - /home/user/antigravity:/home/appuser/data
+      # Display Socket
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - HOME=/home/appuser
+    
+    devices:
+      - /dev/dri:/dev/dri
+    
+    # Required for Electron sandboxing inside Docker
+    security_opt:
+      - seccomp:unconfined
+    
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
