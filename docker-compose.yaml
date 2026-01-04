@@ -1,31 +1,29 @@
 services:
-  antigravity:
-    container_name: antigravity_gui
-    build:
-      # If using the repo, ensure the repo has the updated Dockerfile above!
-      # If you edited the Dockerfile manually in Portainer, that works too.
-      context: https://github.com/procrastinando/antigravity-sandboxed-docker.git
-      dockerfile: Dockerfile
-    
-    # NETWORK FIX: Allows the app to receive the Google Callback on localhost
-    network_mode: host
-
-    volumes:
-      - /home/user/antigravity:/home/appuser/data
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - /run/dbus:/run/dbus
-    
+  webtop:
+    build: https://github.com/procrastinando/antigravity-sandboxed-docker.git.
+    container_name: webtop
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
     environment:
-      - DISPLAY=${DISPLAY:-:0}
-      - HOME=/home/appuser
-      - DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
-    
+      - PUID=1000
+      - PGID=13
+      - TZ=Europe/Berlin
+      - SUBFOLDER=/
+      - TITLE=Antigravity-AI
+      - START_DOCKER=false 
+      # -----------------------
+      - DRINODE=/dev/dri/renderD128
+      - DEVICE=/dev/dri/renderD128
+      - LIBVA_DRIVER_NAME=iHD
+    volumes:
+      - /home/carlos/antigravity/:/config
+      - /var/run/docker.sock:/var/run/docker.sock
     devices:
       - /dev/dri:/dev/dri
-    
-    security_opt:
-      - seccomp:unconfined
-    
+      # - /dev/accel:/dev/accel  <-- Keep commented if you don't have this yet
+    ports:
+      # - 3000:3000
+      - 3001:3001
+    shm_size: "24gb"
     restart: unless-stopped
-    stdin_open: true
-    tty: true
